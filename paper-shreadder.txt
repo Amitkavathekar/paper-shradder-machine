@@ -1,0 +1,147 @@
+
+const int EN1 = 9;
+const int l1 = 10;
+const int l2 = 11;
+const int ir1 = A0;
+const int mode = 3;
+const int fwd_dir = 4;
+const int rev_dir = 5;
+const int emergency_sw = 8;
+
+unsigned char mode_flag = 0;    //0- manual ,1- auto
+unsigned char emergency_flag = 0;  // 0 -emergency occur,1- normal
+unsigned char auto_mode = 0;
+
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println("Testing");
+  pinMode(EN1, OUTPUT);
+  pinMode(l1, OUTPUT);
+  pinMode(l2, OUTPUT);
+  pinMode(ir1, INPUT);
+  pinMode(mode, INPUT);
+  pinMode(fwd_dir, INPUT);
+  pinMode(rev_dir, INPUT);
+  pinMode(emergency_sw, INPUT);
+
+  digitalWrite(EN1, LOW);
+  digitalWrite(l1, LOW);
+  digitalWrite(l2, LOW);
+  Read_emergency_switch();
+  Read_mode_switch();
+}
+
+void loop()
+{
+ Read_emergency_switch();
+ Read_mode_switch();
+ if(emergency_flag == 1)
+ {
+  while (auto_mode == 1)
+  {
+
+      Read_emergency_switch();
+      if(emergency_flag == 0)
+      break;
+      Read_mode_switch();
+      if ((digitalRead(fwd_dir) == 0) && (digitalRead(rev_dir) == 1))
+      {
+        fwd();
+        Serial.println("fwd");
+      }
+      else if ((digitalRead(fwd_dir) == 1) && (digitalRead(rev_dir) == 0))
+      {
+        rev();
+        Serial.println("rev");
+      }
+      else
+      {
+        stops();
+        Serial.println("stop");
+      }
+      
+      //          delay(2000);
+     
+  }
+   while(auto_mode == 0)
+  {
+
+      Read_emergency_switch();
+      if(emergency_flag == 0)
+      break;
+      Read_mode_switch();
+      if ((digitalRead(ir1) == LOW)&&(digitalRead(fwd_dir) == 0))
+      {
+        fwd();
+        Serial.println("auto_fwd");
+      }
+      if ((digitalRead(ir1) == LOW)&&(digitalRead(rev_dir) == 0))
+      {
+        rev();
+        Serial.println("auto_fwd");
+      }
+      
+      else
+      {
+        delay(3000);
+        stops();
+        Serial.println("auto_stop");
+      }
+      //         delay(2000);
+    
+  }
+ }
+}
+
+void Read_emergency_switch()
+{
+  if (digitalRead(emergency_sw) == 1)
+  {
+    emergency_flag = 1;
+    Serial.println("emergency_flag = 1");
+  }
+  else
+  {
+    emergency_flag = 0;
+    stops();
+    Serial.println("emergency_flag = 0");
+    //while (1);
+  }
+}
+
+void Read_mode_switch()
+{
+  if (digitalRead(mode) == 1)
+  {
+    auto_mode = 1;
+    Serial.println("mode = 1");
+  }
+  else
+  {
+    auto_mode = 0;
+    Serial.println("mode = 0");
+  }
+}
+
+
+void stops()
+{
+  digitalWrite(EN1, LOW);
+  digitalWrite(l1, LOW);
+  digitalWrite(l2, LOW);
+}
+
+void fwd()
+{
+  digitalWrite(EN1, HIGH);
+  digitalWrite(l1, HIGH);
+  digitalWrite(l2, LOW);
+}
+
+void rev()
+{
+  digitalWrite(EN1, HIGH);
+  digitalWrite(l1, LOW);
+  digitalWrite(l2, HIGH);
+}
